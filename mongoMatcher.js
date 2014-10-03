@@ -1,5 +1,3 @@
-//MONGO SELECTOR FUNCTION-TREE GARDENER
-
 var _ = require('lodash');
 
 
@@ -16,12 +14,15 @@ var MongoMatcher = function(selector){
 		"$gt","$gte","$lt","$lte","$ne","$in","$nin",	//comparison OK
 	]
 	this.supportedOps = _.without(this.mongoOps,
-			"$type", //TODO: unsupported element ops
-			"$regex","$where","$text", //TODO: unsupported evaluation ops
-			"$geoIntersects","$geoWithin","$nearSphere","$near",//TODO: unsupported geoJSON ops
-			"$","$elemMatch","$meta","$slice" //TODO: unsupported array & projection ops
+			"$type",	//TODO: unsupported element ops
+			"$regex","$where","$text",	//TODO: unsupported evaluation ops
+			"$geoIntersects","$geoWithin","$nearSphere","$near",	//TODO: unsupported geoJSON ops
+			"$","$elemMatch","$meta","$slice"	//TODO: unsupported array & projection ops
 		);
-	this.evaluator = this.growCriterion(selector);
+	if(_.isEqual(selector,{}))
+		this.evaluator = function(doc){return true}
+	else
+		this.evaluator = this.growCriterion(selector);
 }
 
 //Transforms a selector into a function that can determine if a document is matched by the selector
@@ -55,7 +56,6 @@ MongoMatcher.prototype.growCriterion = function(obj, parentKey, noop){
 }
 MongoMatcher.prototype.condenseToEvaluator = function(operator,key,value){
 	var self = this
-	console.log("key =",key);
 	switch(operator){
 		case "$gt":
 			return function(doc){return self.find(doc,key) > value}
@@ -109,6 +109,7 @@ MongoMatcher.prototype.find = function(obj,key){
 }
 MongoMatcher.prototype.discern = function(doc){
 	var self = this;
+	var i = 0;
 	try
 	{
 		var evaluation = self.evaluator(doc);
